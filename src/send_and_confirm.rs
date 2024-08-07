@@ -135,19 +135,13 @@ impl Miner {
                                                 kind: ClientErrorKind::Custom(err.to_string()),
                                             });
                                         }
-                                        if let Some(confirmation) = status.confirmation {
-                                            match confirmation {
-                                                TransactionConfirmationStatus::Processed => {}
-                                                TransactionConfirmationStatus::Confirmed
-                                                | TransactionConfirmationStatus::Finalized => {
-                                                    progress_bar.finish_with_message(format!(
+                                        if let Some(confirmation) = status.confirmations {
+                                            progress_bar.finish_with_message(format!(
                                                         "{} {}",
                                                         "OK".bold().green(),
                                                         sig
                                                     ));
-                                                    return Ok(sig);
-                                                }
-                                            }
+                                            return Ok(sig);
                                         }
                                     }
                                 }
