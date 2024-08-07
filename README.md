@@ -32,6 +32,7 @@ The following new CLI flags have been added:
 
 - `--maxretries`: Maximum number of retries for RPC and gateway requests (default: 150)
 - `--delay`: Delay in milliseconds between retries (default: 300)
+- `--difficulty_target`: The difficulty target for mining (default: 1)
 
 ## Examples
 
@@ -39,6 +40,7 @@ Here are some examples of how to use the new CLI flags:
 
 ```sh
 ore --maxretries 200 --delay 500
+ore mine --difficulty_target 2
 ```
 
 ## Configuration File
