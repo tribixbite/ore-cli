@@ -184,22 +184,36 @@ async fn main() {
         solana_cli_config::Config::default()
     };
 
+    // Load the custom config file if provided
+    let custom_config = if let Some(config_file_path) = &args.config_file {
+        Some(utils::load_config_file(config_file_path))
+    } else {
+        None
+    };
+
     // Initialize miner.
-    let cluster = args.rpc.unwrap_or(cli_config.json_rpc_url);
-    let default_keypair = args.keypair.unwrap_or(cli_config.keypair_path.clone());
-    let fee_payer_filepath = args.fee_payer_filepath.unwrap_or(cli_config.keypair_path.clone());
+    let cluster = args.rpc.or_else(|| custom_config.as_ref().and_then(|config| config.get_str("rpc").ok())).unwrap_or(cli_config.json_rpc_url);
+    let default_keypair = args.keypair.or_else(|| custom_config.as_ref().and_then(|config| config.get_str("keypair").ok())).unwrap_or(cli_config.keypair_path.clone());
+    let fee_payer_filepath = args.fee_payer_filepath.or_else(|| custom_config.as_ref().and_then(|config| config.get_str("fee_payer_filepath").ok())).unwrap_or(cli_config.keypair_path.clone());
+    let priority_fee = args.priority_fee.or_else(|| custom_config.as_ref().and_then(|config| config.get_int("priority_fee").ok().map(|v| v as u64)));
+    let dynamic_fee_url = args.dynamic_fee_url.or_else(|| custom_config.as_ref().and_then(|config| config.get_str("dynamic_fee_url").ok()));
+    let dynamic_fee_strategy = args.dynamic_fee_strategy.or_else(|| custom_config.as_ref().and_then(|config| config.get_str("dynamic_fee_strategy").ok()));
+    let dynamic_fee_max = args.dynamic_fee_max.or_else(|| custom_config.as_ref().and_then(|config| config.get_int("dynamic_fee_max").ok().map(|v| v as u64)));
+    let maxretries = args.maxretries.or_else(|| custom_config.as_ref().and_then(|config| config.get_int("maxretries").ok().map(|v| v as usize)));
+    let delay = args.delay.or_else(|| custom_config.as_ref().and_then(|config| config.get_int("delay").ok().map(|v| v as u64)));
+
     let rpc_client = RpcClient::new_with_commitment(cluster, CommitmentConfig::confirmed());
 
     let miner = Arc::new(Miner::new(
         Arc::new(rpc_client),
-        args.priority_fee,
+        priority_fee,
         Some(default_keypair),
-        args.dynamic_fee_url,
-        args.dynamic_fee_strategy,
-        args.dynamic_fee_max,
+        dynamic_fee_url,
+        dynamic_fee_strategy,
+        dynamic_fee_max,
         Some(fee_payer_filepath),
-        args.maxretries,
-        args.delay,
+        maxretries,
+        delay,
     ));
 
     // Execute user command.

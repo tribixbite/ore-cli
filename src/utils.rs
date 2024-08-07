@@ -12,6 +12,7 @@ use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_program::{pubkey::Pubkey, sysvar};
 use solana_sdk::clock::Clock;
 use spl_associated_token_account::get_associated_token_address;
+use config::{Config as ConfigFile, File};
 
 pub async fn _get_treasury(client: &RpcClient) -> Treasury {
     let data = client
@@ -87,4 +88,12 @@ pub fn proof_pubkey(authority: Pubkey) -> Pubkey {
 #[cached]
 pub fn treasury_tokens_pubkey() -> Pubkey {
     get_associated_token_address(&TREASURY_ADDRESS, &MINT_ADDRESS)
+}
+
+pub fn load_config_file(config_file_path: &str) -> ConfigFile {
+    let mut settings = ConfigFile::default();
+    settings
+        .merge(File::with_name(config_file_path))
+        .expect("Failed to load config file");
+    settings
 }
