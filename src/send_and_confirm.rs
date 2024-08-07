@@ -22,14 +22,6 @@ use crate::Miner;
 
 const MIN_SOL_BALANCE: f64 = 0.005;
 
-const RPC_RETRIES: usize = 0;
-const _SIMULATION_RETRIES: usize = 4;
-const GATEWAY_RETRIES: usize = 150;
-const CONFIRM_RETRIES: usize = 1;
-
-const CONFIRM_DELAY: u64 = 0;
-const GATEWAY_DELAY: u64 = 300;
-
 pub enum ComputeBudget {
     Dynamic,
     Fixed(u32),
@@ -88,7 +80,7 @@ impl Miner {
             skip_preflight: true,
             preflight_commitment: Some(CommitmentLevel::Confirmed),
             encoding: Some(UiTransactionEncoding::Base64),
-            max_retries: Some(RPC_RETRIES),
+            max_retries: Some(self.maxretries.unwrap_or(0)),
             min_context_slot: None,
         };
         let mut tx = Transaction::new_with_payer(&final_ixs, Some(&fee_payer.pubkey()));
@@ -126,8 +118,8 @@ impl Miner {
                     }
 
                     // Confirm the tx landed
-                    for _ in 0..CONFIRM_RETRIES {
-                        std::thread::sleep(Duration::from_millis(CONFIRM_DELAY));
+                    for _ in 0..self.maxretries.unwrap_or(1) {
+                        std::thread::sleep(Duration::from_millis(self.delay.unwrap_or(0)));
                         match client.get_signature_statuses(&[sig]).await {
                             Ok(signature_statuses) => {
                                 for status in signature_statuses.value {
@@ -143,7 +135,7 @@ impl Miner {
                                                 kind: ClientErrorKind::Custom(err.to_string()),
                                             });
                                         }
-                                        if let Some(confirmation) = status.confirmation_status {
+                                        if let Some(confirmation) = status.confirmation {
                                             match confirmation {
                                                 TransactionConfirmationStatus::Processed => {}
                                                 TransactionConfirmationStatus::Confirmed
@@ -184,9 +176,9 @@ impl Miner {
             }
 
             // Retry
-            std::thread::sleep(Duration::from_millis(GATEWAY_DELAY));
+            std::thread::sleep(Duration::from_millis(self.delay.unwrap_or(300)));
             attempts += 1;
-            if attempts > GATEWAY_RETRIES {
+            if attempts > self.maxretries.unwrap_or(150) {
                 progress_bar.finish_with_message(format!("{}: Max retries", "ERROR".bold().red()));
                 return Err(ClientError {
                     request: None,

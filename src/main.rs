@@ -35,6 +35,8 @@ struct Miner {
     pub dynamic_fee_max: Option<u64>,
     pub rpc_client: Arc<RpcClient>,
     pub fee_payer_filepath: Option<String>,
+    pub maxretries: Option<usize>,
+    pub delay: Option<u64>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -143,7 +145,24 @@ struct Args {
         global = true
     )]
     dynamic_fee_max: Option<u64>,
-    
+
+    #[arg(
+        long,
+        value_name = "MAX_RETRIES",
+        help = "Maximum number of retries for RPC and gateway requests",
+        default_value = "150",
+        global = true
+    )]
+    maxretries: Option<usize>,
+
+    #[arg(
+        long,
+        value_name = "DELAY",
+        help = "Delay in milliseconds between retries",
+        default_value = "300",
+        global = true
+    )]
+    delay: Option<u64>,
 
     #[command(subcommand)]
     command: Commands,
@@ -179,6 +198,8 @@ async fn main() {
         args.dynamic_fee_strategy,
         args.dynamic_fee_max,
         Some(fee_payer_filepath),
+        args.maxretries,
+        args.delay,
     ));
 
     // Execute user command.
@@ -229,6 +250,8 @@ impl Miner {
         dynamic_fee_strategy: Option<String>,
         dynamic_fee_max: Option<u64>,
         fee_payer_filepath: Option<String>,
+        maxretries: Option<usize>,
+        delay: Option<u64>,
     ) -> Self {
         Self {
             rpc_client,
@@ -237,7 +260,9 @@ impl Miner {
             dynamic_fee_url,
             dynamic_fee_strategy,
             dynamic_fee_max,
-            fee_payer_filepath
+            fee_payer_filepath,
+            maxretries,
+            delay,
         }
     }
 

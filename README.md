@@ -25,3 +25,26 @@ You can use the `-h` flag on any command to pull up a help menu with documentati
 ```sh
 ore -h
 ```
+
+## New CLI Flags
+
+The following new CLI flags have been added:
+
+- `--maxretries`: Maximum number of retries for RPC and gateway requests (default: 150)
+- `--delay`: Delay in milliseconds between retries (default: 300)
+
+## Examples
+
+Here are some examples of how to use the new CLI flags:
+
+```sh
+ore --maxretries 200 --delay 500
+```
+
+## Configuration File
+
+You can also specify the `maxretries` and `delay` values in an `ore.config` file and use the `-c` flag to provide the path to the configuration file:
+
+```sh
+ore -c path/to/ore.config
+```
